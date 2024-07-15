@@ -79,7 +79,7 @@ if (isset($_POST['login'])) {
 
 						<!-- footer -->
 						<div class="panel-footer">
-							<center>&copy;<?php echo date("Y"); ?> - Hana Silvia</center>
+							<center>&copy;<?php echo date("Y"); ?> - Ahmad Andri Rafiq</center>
 						</div>
 						<!-- end footer -->
 					</div>

@@ -141,10 +141,10 @@ if (isset($_GET['hapus'])) {
 										<label>NO.TELEPON</label>
 										<input type="text" name="no" class="form-control" value="<?php echo @$edit['no_telepon']; ?>" required placeholder="Masukan No.Telepon Petugas" onkeypress="return event.charCode >=48 && event.charCode <= 57" maxlength="15">
 									</div>
-									<div class="form-group">
+									<!-- <div class="form-group">
 										<label>FOTO</label>
 										<input type="file" name="foto" class="form-control">
-									</div>
+									</div> -->
 									<div class="form-group">
 										<?php
 										if (@$_GET['id'] == "") { ?>

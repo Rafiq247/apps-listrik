@@ -1,6 +1,7 @@
 <?php
 if (!isset($_GET['menu'])) {
 	header('location:hal_utama.php?menu=pelanggan');
+	exit();
 }
 
 // Koneksi ke database
@@ -18,7 +19,7 @@ if ($koneksi->connect_error) {
 
 // Dasar
 $table = "pelanggan";
-$id = @$_GET['id'];
+$id = $_GET['id'] ?? '';
 $where = "md5(sha1(id_pelanggan)) = '$id'";
 $redirect = "?menu=pelanggan";
 
@@ -52,7 +53,7 @@ $ubah_pelanggan = [
 
 // Untuk penggunaan default meter awal
 if (date("d") > 25) {
-	$bulan = (date("m") < 10) ? "0" . (date("m") + 1) : date("m") + 1;
+	$bulan = (date("m") == 12) ? 1 : date("m") + 1;
 	$tahun = (date("m") == 12) ? date("Y") + 1 : date("Y");
 } else {
 	$bulan = date("m");
@@ -109,7 +110,7 @@ if (isset($_POST['bcari'])) {
 			<div class="col-md-12">
 				<div class="col-md-3">
 					<div class="panel panel-default">
-						<?php if (!@$_GET['id']) { ?>
+						<?php if (empty($_GET['id'])) { ?>
 							<div class="panel-heading">INPUT PELANGGAN</div>
 						<?php } else { ?>
 							<div class="panel-heading">UBAH PELANGGAN</div>
@@ -119,19 +120,11 @@ if (isset($_POST['bcari'])) {
 								<div class="col-md-12">
 									<div class="form-group">
 										<label>ID PELANGGAN</label>
-										<input type="text" name="id_pelanggan" class="form-control" placeholder="Masukan ID Pelanggan" required readonly value="<?php if (@$_GET['id'] == "") {
-																																									echo $id_pel;
-																																								} else {
-																																									echo @$edit['id_pelanggan'];
-																																								} ?>">
+										<input type="text" name="id_pelanggan" class="form-control" placeholder="Masukan ID Pelanggan" required readonly value="<?php echo empty($_GET['id']) ? $id_pel : @$edit['id_pelanggan']; ?>">
 									</div>
 									<div class="form-group">
 										<label>NO.METER</label>
-										<input type="text" name="no_meter" class="form-control" placeholder="Masukan NO.METER" required readonly value="<?php if (@$_GET['id'] == "") {
-																																							echo $no_met;
-																																						} else {
-																																							echo @$edit['no_meter'];
-																																						} ?>">
+										<input type="text" name="no_meter" class="form-control" placeholder="Masukan NO.METER" required readonly value="<?php echo empty($_GET['id']) ? $no_met : @$edit['no_meter']; ?>">
 									</div>
 									<div class="form-group">
 										<label>NAMA</label>
@@ -145,43 +138,34 @@ if (isset($_POST['bcari'])) {
 										<label>JENIS TARIF</label>
 										<select name="id_tarif" class="form-control" required>
 											<?php
-											// Mendapatkan data tarif terpilih jika sedang melakukan edit
-											$b = $aksi->caridata("tarif WHERE id_tarif = '$edit[id_tarif]'");
-											if ($b) {
-												echo '<option value="' . $b['id_tarif'] . '" selected>' . $b['kode_tarif'] . '</option>';
+											if (!empty($edit['id_tarif'])) {
+												$b = $aksi->caridata("tarif WHERE id_tarif = '{$edit['id_tarif']}'");
+												if ($b) {
+													echo '<option value="' . $b['id_tarif'] . '" selected>' . $b['kode_tarif'] . '</option>';
+												}
 											}
 
-											// Mengambil semua data tarif dari database
 											$query = "SELECT * FROM tarif";
-											$result = $mysqli->query($query);
+											$result = $koneksi->query($query);
 
-											// Periksa apakah query berhasil dieksekusi
 											if ($result) {
-												// Fetch data dan tampilkan dalam bentuk dropdown options
 												while ($tarif = $result->fetch_assoc()) {
 													echo '<option value="' . $tarif['id_tarif'] . '">' . $tarif['kode_tarif'] . '</option>';
 												}
-
-												// Bebaskan hasil query
 												$result->free();
 											} else {
-												echo "Error: " . $query . "<br>" . $mysqli->error;
+												echo "Error: " . $query . "<br>" . $koneksi->error;
 											}
-
-											// Tutup koneksi database
-											$mysqli->close();
 											?>
 										</select>
 									</div>
 
 									<div class="form-group">
-										<?php
-										if (@$_GET['id'] == "") { ?>
+										<?php if (empty($_GET['id'])) { ?>
 											<input type="submit" name="bsimpan" class="btn btn-primary btn-lg btn-block" value="SIMPAN">
 										<?php } else { ?>
 											<input type="submit" name="bubah" class="btn btn-success btn-lg btn-block" value="UBAH">
 										<?php } ?>
-
 										<a href="?menu=pelanggan" class="btn btn-danger btn-lg btn-block">RESET</a>
 									</div>
 								</div>
@@ -206,7 +190,7 @@ if (isset($_POST['bcari'])) {
 								</form>
 							</div>
 							<br>
-							<label class="label-danger">* Jika kolom berwarna merah ,Pelanggan memiliki tunggakan >= 3 bulan</label>
+							<label class="label-danger">* Jika kolom berwarna merah, Pelanggan memiliki tunggakan >= 3 bulan</label>
 							<div class="col-md-12">
 								<div class="table-responsive">
 									<table class="table table-bordered table-striped table-hover">
@@ -226,19 +210,17 @@ if (isset($_POST['bcari'])) {
 											<?php
 											$no = 0;
 											$data = $aksi->tampil($table, $cari, "");
-											if ($data == "") {
+											if (empty($data)) {
 												$aksi->no_record(9);
 											} else {
 												foreach ($data as $r) {
-													$a = $aksi->caridata("tarif WHERE id_tarif = '$r[id_tarif]'");
-													$cek = $aksi->cekdata("penggunaan WHERE id_pelanggan ='$r[id_pelanggan]' AND meter_awal = '0' AND meter_akhir = '0'");
-													$cek2 = $aksi->cekdata("tagihan WHERE id_pelanggan = '$r[id_pelanggan]' AND status = 'Belum Bayar'");
-													$no++; ?>
-													<?php if ($cek2 >= 3) { ?>
-														<tr style="background-color: #d9534f;">
-														<?php } else { ?>
-														<tr>
-														<?php } ?>
+													$a = $aksi->caridata("tarif WHERE id_tarif = '{$r['id_tarif']}'");
+													$cek = $aksi->cekdata("penggunaan WHERE id_pelanggan ='{$r['id_pelanggan']}' AND meter_awal = '0' AND meter_akhir = '0'");
+													$cek2 = $aksi->cekdata("tagihan WHERE id_pelanggan = '{$r['id_pelanggan']}' AND status = 'Belum Bayar'");
+													$no++;
+													$rowStyle = ($cek2 >= 3) ? 'style="background-color: #d9534f;"' : '';
+											?>
+													<tr <?php echo $rowStyle; ?>>
 														<td><?php echo $no; ?>.</td>
 														<td><?php echo $r['id_pelanggan'] ?></td>
 														<td><?php echo $r['no_meter'] ?></td>
@@ -246,16 +228,14 @@ if (isset($_POST['bcari'])) {
 														<td><?php echo $r['alamat'] ?></td>
 														<td><?php echo $r['tenggang'] ?></td>
 														<td><?php echo $a['kode_tarif'] ?></td>
-														<?php
-														if ($cek == 0) { ?>
+														<?php if ($cek == 0) { ?>
 															<td>&nbsp;</td>
 														<?php } else { ?>
 															<td align="center"><a href="?menu=pelanggan&hapus&id=<?php echo md5(sha1($r['id_pelanggan'])); ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
 														<?php } ?>
 														<td align="center"><a href="?menu=pelanggan&edit&id=<?php echo md5(sha1($r['id_pelanggan'])); ?>"><span class="glyphicon glyphicon-edit"></span></a></td>
-														</tr>
-
-												<?php }
+													</tr>
+											<?php }
 											} ?>
 										</tbody>
 									</table>
