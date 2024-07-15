@@ -1,0 +1,6 @@
+===========---//LOGIN USER\\---==============|
+							|
+Akun Agen			Akun PLN		|
+user: agen			user: petugas		|
+pass: agen123			pass: petugas123	|
+========================================================|
